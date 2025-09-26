@@ -1,0 +1,40 @@
+{
+  "name": "ai-assistant-server",
+  "version": "1.0.0",
+  "description": "Personal AI Assistant - Azure AI Foundry Integration",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server-voice-sdk.js",
+    "start:basic": "node server.js",
+    "start:rest": "node server-with-voice-fixed.js",
+    "dev": "node server-voice-sdk.js",
+    "test": "node test-agent-connection.js",
+    "test:voice": "node test-voice-features.js"
+  },
+  "dependencies": {
+    "@azure/ai-projects": "^1.0.0-beta.3",
+    "@azure/identity": "^4.4.1",
+    "microsoft-cognitiveservices-speech-sdk": "^1.34.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "ws": "^8.14.2",
+    "dotenv": "^16.3.1",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^9.0.1",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "ai",
+    "assistant",
+    "azure",
+    "foundry",
+    "voice",
+    "chat"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
