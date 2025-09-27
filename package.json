@@ -1,40 +1,54 @@
 {
-  "name": "ai-assistant-server",
+  "name": "nrai-voice-assistant",
   "version": "1.0.0",
-  "description": "Personal AI Assistant - Azure AI Foundry Integration",
+  "description": "NRAI Voice Assistant - Production-ready bilingual (English/Nepali) voice assistant with RAG capabilities",
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server-voice-sdk.js",
-    "start:basic": "node server.js",
-    "start:rest": "node server-with-voice-fixed.js",
-    "dev": "node server-voice-sdk.js",
-    "test": "node test-agent-connection.js",
-    "test:voice": "node test-voice-features.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test-speech": "node test-speech-service.js",
+    "test-stream": "node test-audio-stream.js",
+    "validate": "node validate-speech.js",
+    "quick-test": "node quick-test.js",
+    "troubleshoot": "node audio-troubleshooting.js",
+    "health": "curl http://localhost:3001/api/health"
   },
   "dependencies": {
-    "@azure/ai-projects": "^1.0.0-beta.3",
-    "@azure/identity": "^4.4.1",
-    "microsoft-cognitiveservices-speech-sdk": "^1.34.0",
-    "express": "^4.18.2",
+    "@azure/ai-projects": "^1.0.0",
+    "@azure/core-auth": "^1.10.1",
+    "@azure/identity": "^4.12.0",
     "cors": "^2.8.5",
-    "ws": "^8.14.2",
     "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "microsoft-cognitiveservices-speech-sdk": "^1.46.0",
     "multer": "^1.4.5-lts.1",
-    "uuid": "^9.0.1",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "keywords": [
-    "ai",
-    "assistant",
-    "azure",
-    "foundry",
-    "voice",
-    "chat"
+    "voice-assistant",
+    "azure-ai",
+    "speech-to-text",
+    "text-to-speech",
+    "nepali",
+    "english",
+    "bilingual",
+    "rag",
+    "ai-agent",
+    "nepal"
   ],
-  "author": "Your Name",
-  "license": "MIT"
+  "author": "NRAI Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nrai/voice-assistant.git"
+  }
 }
