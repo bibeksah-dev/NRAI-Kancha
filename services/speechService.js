@@ -430,13 +430,20 @@ export class SpeechService {
         }
 
         try {
-            console.log(`[TTS] Synthesizing text: "${text.substring(0, 50)}..." in ${language} (${gender})`);
+            // IMPORTANT: Detect language from the TEXT content, not from input language
+            const textLanguage = this.detectLanguageFromTextContent(text);
+            console.log(`[TTS] Text language detected: ${textLanguage.language} (confidence: ${textLanguage.confidence})`);
+            
+            // Use detected text language if confidence is high, otherwise use provided language
+            const finalLanguage = textLanguage.confidence > 0.7 ? textLanguage.language : language;
+            
+            console.log(`[TTS] Synthesizing text: "${text.substring(0, 50)}..." in ${finalLanguage} (${gender})`);
 
             // Create speech configuration
             const speechConfig = sdk.SpeechConfig.fromSubscription(this.speechKey, this.region);
             
             // Select appropriate voice
-            const voiceName = this.selectVoice(language, gender);
+            const voiceName = this.selectVoice(finalLanguage, gender);
             speechConfig.speechSynthesisVoiceName = voiceName;
             speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm;
 
@@ -472,7 +479,7 @@ export class SpeechService {
                 return {
                     audioData: `data:audio/wav;base64,${audioData}`,
                     voiceUsed: voiceName,
-                    language: language,
+                    language: finalLanguage,
                     duration: result.audioDuration
                 };
             } else {
@@ -506,6 +513,79 @@ export class SpeechService {
         // Get voice from mapping
         const voiceGroup = this.voices[normalizedLang] || this.voices['en-US'];
         return voiceGroup[gender] || voiceGroup['female'];
+    }
+
+    /**
+     * Detect language from text content (Devanagari script detection + pattern matching)
+     * @param {string} text - Text to analyze
+     * @returns {Object} Language detection result
+     */
+    detectLanguageFromTextContent(text) {
+        // Check for Devanagari script (used for Nepali)
+        const devanagariRegex = /[\u0900-\u097F]/;
+        const hasDevanagari = devanagariRegex.test(text);
+        
+        if (hasDevanagari) {
+            // Count Devanagari characters vs total characters
+            const devanagariChars = (text.match(/[\u0900-\u097F]/g) || []).length;
+            const totalChars = text.replace(/[\s\d\*\-\_\(\)\[\]\{\}\.\/\\]/g, '').length;
+            const devanagariRatio = totalChars > 0 ? devanagariChars / totalChars : 0;
+            
+            console.log(`[TTS] Devanagari script detected: ${devanagariChars}/${totalChars} chars (${(devanagariRatio * 100).toFixed(1)}%)`);
+            
+            if (devanagariRatio > 0.3) {
+                return { 
+                    language: 'ne-NP', 
+                    confidence: Math.min(0.7 + devanagariRatio * 0.3, 0.95),
+                    method: 'devanagari-script'
+                };
+            }
+        }
+        
+        // Fallback to pattern-based detection for romanized Nepali
+        const nepaliPatterns = {
+            words: ['malai', 'tapai', 'hamro', 'nepal', 'samvidhan', 'garnu', 'bhanne', 'kobarema', 'bojanucha', 'kasailai', 'kasari'],
+            endings: [/cha$/i, /ma$/i, /lai$/i, /ko$/i, /le$/i, /nu$/i, /hos$/i, /dai$/i]
+        };
+
+        const words = text.toLowerCase().split(/\s+/);
+        let nepaliScore = 0;
+        let totalChecks = 0;
+
+        // Check for Nepali words
+        words.forEach(word => {
+            // Check known Nepali words
+            if (nepaliPatterns.words.includes(word)) {
+                nepaliScore += 2;
+                totalChecks += 2;
+            }
+
+            // Check word endings
+            nepaliPatterns.endings.forEach(pattern => {
+                if (pattern.test(word)) {
+                    nepaliScore += 1;
+                    totalChecks += 1;
+                }
+            });
+        });
+
+        // Calculate confidence
+        const confidence = totalChecks > 0 ? Math.min(nepaliScore / totalChecks, 0.9) : 0.6;
+
+        // Determine language
+        if (confidence > 0.7) {
+            return { 
+                language: 'ne-NP', 
+                confidence,
+                method: 'pattern-matching'
+            };
+        }
+
+        return { 
+            language: 'en-US', 
+            confidence: 0.6,
+            method: 'default'
+        };
     }
 
     /**

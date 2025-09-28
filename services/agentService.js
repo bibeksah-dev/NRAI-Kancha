@@ -62,15 +62,38 @@ export class AgentService {
       }
       console.log(`Run completed with status: ${run.status}`);
 
-      // Retrieve messages
-      const messages = await this.client.agents.messages.list(thread.id, { order: "asc" });
+      // Retrieve messages in descending order to get the latest first
+      const messages = await this.client.agents.messages.list(thread.id, { order: "desc" });
+      console.log(`[DEBUG] Retrieving messages from thread ${thread.id}`);
       const output = [];
+      let foundLatestAssistant = false;
+      
       for await (const m of messages) {
         const content = m.content.find((c) => c.type === "text" && "text" in c);
         if (content) {
+          // Add to output array
           output.push(`${m.role}: ${content.text.value}`);
+          
+          // Stop after finding the latest assistant response and user message
+          if (m.role === "assistant" && !foundLatestAssistant) {
+            foundLatestAssistant = true;
+            // Continue to also get the user message that triggered this response
+          } else if (foundLatestAssistant && m.role === "user") {
+            // We've got both the latest assistant response and the user message
+            break;
+          }
         }
       }
+      
+      // Reverse the output to maintain chronological order (user first, then assistant)
+      output.reverse();
+      
+      console.log(`[DEBUG] Latest conversation (${output.length} messages):`);
+      output.forEach((msg, idx) => {
+        const preview = msg.substring(0, 100) + (msg.length > 100 ? '...' : '');
+        console.log(`  [${idx}] ${preview}`);
+      });
+      
       return {
         status: run.status,
         output,
